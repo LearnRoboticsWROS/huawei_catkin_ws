@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<launch>
+
+
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find my_robot_description)/urdf/manipulator_gripper_camera.urdf" />
+
+        <arg name="x" default="0" />
+        <arg name="y" default="0" />
+        <arg name="z" default="0" />
+
+        <param name="cube" command="$(find xacro)/xacro --inorder $(find my_robot_description)/urdf/cube_pick_and_place.urdf" />
+
+        <arg name="x_c" default="1" />
+        <arg name="y_c" default="1" />
+        <arg name="z_c" default="0.025" />
+
+        <!-- Launch Gazebo world-->
+        <include file ="$(find gazebo_ros)/launch/empty_world.launch" >
+            <arg name="use_sim_time" value="true"/>
+            <arg name="debug" value="false"/>
+            <arg name="gui" value="true"/>
+            <arg name="paused" value="true" />
+        </include>
+
+        <node name="spawn_the_robot" pkg="gazebo_ros" type="spawn_model" output="screen"
+            args="-urdf -param robot_description -model manipulator_gripper -x $(arg x) -y $(arg y) -z $(arg z)" />
+
+         <node name="spawn_the_cube" pkg="gazebo_ros" type="spawn_model" output="screen"
+            args="-urdf -param cube -model cube_pick_and_place -x $(arg x_c) -y $(arg y_c) -z $(arg z_c)" />
+
+        
+        <rosparam command="load" file="$(find my_robot_description)/config/joint.yaml"/>
+        
+        <node name="controller_spawner" pkg="controller_manager" type="spawner"  
+            output="screen" respawn="false" ns="/mrm"
+            args="
+                joint_state_controller 
+                joint1_position_controller 
+                joint2_position_controller
+                joint3_position_controller
+                joint4_position_controller
+                joint5_position_controller
+                joint6_position_controller
+                gripper_right_controller
+                gripper_left_controller
+                --timeout 60">
+        </node>
+
+        <!-- convert joint states to TF transforms for rviz, etc -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+            respawn="false" output="screen">
+            <remap from="/joint_states" to="/mrm/joint_states" />
+        </node>
+
+        <node name="rqt_reconfigure" pkg="rqt_gui" type="rqt_gui" />
+        
+    
+
+</launch>

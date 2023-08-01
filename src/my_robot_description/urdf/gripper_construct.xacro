@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Gripper -->
+    <xacro:macro  name="gripper" params="parent origin_xyz">
+
+        <link name="gripper_base">
+        <inertial>
+          <mass value="${gripper_base_mass}" />
+          <origin xyz="0 0 0"/>
+          <xacro:box_inertia mass="${gripper_base_mass}" x="${gripper_base_x}" y="${gripper_base_y}" z="${gripper_base_z}" />
+        </inertial>
+        <visual>
+          <geometry>
+            <box size="${gripper_base_x} ${gripper_base_y} ${gripper_base_z}"/>
+          </geometry>
+          <material name="grey" />
+        </visual>
+        <collision>
+          <geometry>
+            <box size="${gripper_base_x} ${gripper_base_y} ${gripper_base_z}"/>
+          </geometry>
+        </collision>
+      </link>
+
+      <joint name="gripper_base_joint" type="prismatic">
+        <origin xyz="${origin_xyz}" rpy="0 0 0"/>
+        <parent link="${parent}" />
+        <child link="gripper_base" />
+        <axis xyz="0 0 1" />
+        <limit velocity="1.0" effort="10.0" lower="${-1.0 * base_box_x / 2.0}" upper="${base_box_x / 2.0}"/>
+        <dynamics friction="1" damping="1" />
+      </joint>
+
+      <transmission name="gripper_base_tr">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="gripper_base_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="motor_gripper_base_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+
+
+      <link name="gripper_l">
+        <inertial>
+          <mass value="${gripper_finguer_mass}" />
+          <origin xyz="0 0 0"/>
+          <xacro:box_inertia mass="${gripper_finguer_mass}" x="${gripper_finguer_x}" y="${gripper_finguer_y}" z="${gripper_finguer_z}" />
+        </inertial>
+        <visual>
+          <geometry>
+            <box size="${gripper_finguer_x} ${gripper_finguer_y} ${gripper_finguer_z}"/>
+          </geometry>
+          <material name="grey" />
+        </visual>
+        <collision>
+          <geometry>
+            <box size="${gripper_finguer_x} ${gripper_finguer_y} ${gripper_finguer_z}"/>
+          </geometry>
+        </collision>
+      </link>
+
+      <joint name="gripper_l_joint" type="prismatic">
+        <origin xyz="${gripper_finguer_x / 2.0} 0 0" rpy="0 0 0"/>
+        <parent link="gripper_base" />
+        <child link="gripper_l" />
+        <axis xyz="0 1 0" />
+        <limit velocity="1.0" effort="10.0" lower="${gripper_finguer_y / 2.0}" upper="${gripper_base_y / 2.0}"/>
+        <dynamics friction="1" damping="1" />
+      </joint>
+
+      <transmission name="gripper_l_joint_tr">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="gripper_l_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="gripper_l_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+
+
+      <link name="gripper_r">
+        <inertial>
+          <mass value="${gripper_finguer_mass}" />
+          <origin xyz="0 0 0"/>
+          <xacro:box_inertia mass="${gripper_finguer_mass}" x="${gripper_finguer_x}" y="${gripper_finguer_y}" z="${gripper_finguer_z}" />
+        </inertial>
+        <visual>
+          <geometry>
+            <box size="${gripper_finguer_x} ${gripper_finguer_y} ${gripper_finguer_z}"/>
+          </geometry>
+          <material name="grey" />
+        </visual>
+        <collision>
+          <geometry>
+            <box size="${gripper_finguer_x} ${gripper_finguer_y} ${gripper_finguer_z}"/>
+          </geometry>
+        </collision>
+      </link>
+
+      <joint name="gripper_r_joint" type="prismatic">
+        <origin xyz="${gripper_finguer_x / 2.0} 0 0" rpy="0 0 0"/>
+        <parent link="gripper_base" />
+        <child link="gripper_r" />
+        <axis xyz="0 -1 0" />
+        <limit velocity="1.0" effort="10.0" lower="${gripper_finguer_y / 2.0}" upper="${gripper_base_y / 2.0}"/>
+        <dynamics friction="1" damping="1" />
+        <mimic joint="gripper_l_joint" multiplier="1.0" offset="0" />
+      </joint>
+
+      <transmission name="gripper_r_joint_tr">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="gripper_r_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="gripper_r_joint">
+           <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+
+
+
+      <!-- ros_control plugin -->
+      <xacro:macro name="mimic_joint_plugin_gazebo" params="parent_joint mimic_joint has_pid:=false multiplier:=1.0 offset:=0 sensitiveness:=0.0 max_effort:=200.0 robot_namespace:=''">
+          <gazebo>
+              <plugin name="${mimic_joint}_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+                  <joint>${parent_joint}</joint>
+                  <mimicJoint>${mimic_joint}</mimicJoint>
+                  <xacro:if value="${has_pid}">
+                  <hasPID />
+                  </xacro:if>
+                  <multiplier>${multiplier}</multiplier>
+                  <offset>${offset}</offset>
+                  <sensitiveness>${sensitiveness}</sensitiveness>
+                  <maxEffort>${max_effort}</maxEffort>
+                  <xacro:unless value="${robot_namespace == ''}">
+                      <robotNamespace>($robot_namespace)</robotNamespace>
+                  </xacro:unless>
+              </plugin>
+          </gazebo>
+      </xacro:macro>
+
+
+      <xacro:mimic_joint_plugin_gazebo parent_joint="gripper_l_joint"
+        mimic_joint="gripper_r_joint" has_pid="false" multiplier="1.0"
+        max_effort="200.0" />
+
+
+      <gazebo>
+          <plugin name="gazebo_grasp_fix" filename="libgazebo_grasp_fix.so">
+              <arm>
+                  <arm_name>gripper</arm_name>
+                  <palm_link>gripper_base</palm_link>
+                  <gripper_link> gripper_l </gripper_link>
+                  <gripper_link> gripper_r </gripper_link>
+              </arm>
+              <forces_angle_tolerance>100</forces_angle_tolerance>
+              <update_rate>10</update_rate>
+              <grip_count_threshold>3</grip_count_threshold>
+              <max_grip_count>10</max_grip_count>
+              <release_tolerance>0.001</release_tolerance>
+              <disable_collisions_on_attach>false</disable_collisions_on_attach>
+              <contact_topic>__default_topic__</contact_topic>
+          </plugin>
+      </gazebo>
+
+
+  </xacro:macro >
+
+</robot>

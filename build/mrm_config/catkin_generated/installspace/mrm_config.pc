@@ -1,0 +1,8 @@
+prefix=/home/tutorial/catkin_ws/install
+
+Name: mrm_config
+Description: Description of mrm_config
+Version: 0.3.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

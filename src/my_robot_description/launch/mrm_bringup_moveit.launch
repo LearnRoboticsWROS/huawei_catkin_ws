@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+
+<launch> 
+  <!-- Launch Gazebo  --> 
+  <include file="$(find my_robot_description)/launch/mrm_with_rgbd_world.launch" />    
+
+  <!-- Load joint controller configurations from YAML file to parameter server -->
+  <rosparam file="$(find my_robot_description)/config/trajectory_control.yaml" command="load"/>
+  <rosparam file="$(find my_robot_description)/config/mrm_joint_states.yaml" command="load"/>
+  
+  <node name="controller_spawner" pkg="controller_manager" type="spawner"  
+            output="screen" respawn="false" ns="/mrm"
+            args="
+                joint_state_controller 
+                arm_controller" >
+  </node>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+            respawn="false" output="screen">
+            <remap from="/joint_states" to="/mrm/joint_states" />
+        </node>
+
+ 
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" /> 
+	
+	<remap from="joint_states" to="/mrm/joint_states" />
+  
+  <include file="$(find mrm_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="false" />
+  </include>
+
+  <include file="$(find mrm_config)/launch/move_group.launch">
+    <arg name="publish_monitored_planning_scene" value="true" />
+  </include>
+
+  <include file="$(find mrm_config)/launch/moveit_rviz.launch">
+    <arg name="rviz_config" value="$(find mrm_moveit_config)/launch/moveit.rviz"/>
+  </include>
+
+	
+	
+</launch> 
+
+
+
+
+
+

@@ -1,0 +1,8 @@
+prefix=/home/tutorial/catkin_ws/devel
+
+Name: mrm_moveit_config
+Description: Description of mrm_moveit_config
+Version: 0.3.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
