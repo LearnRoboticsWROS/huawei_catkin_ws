@@ -12,7 +12,9 @@
             output="screen" respawn="false" ns="/mrm"
             args="
                 joint_state_controller 
-                arm_controller" >
+                arm_controller
+                gripper_controller
+                --timeout 60" >
   </node>
 
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
@@ -34,12 +36,14 @@
   </include>
 
   <include file="$(find mrm_config)/launch/moveit_rviz.launch">
-    <arg name="rviz_config" value="$(find mrm_moveit_config)/launch/moveit.rviz"/>
+    <arg name="rviz_config" value="$(find mrm_config)/launch/moveit.rviz"/>
   </include>
 
 	
 	
 </launch> 
+
+
 
 
 
